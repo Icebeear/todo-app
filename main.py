@@ -22,6 +22,10 @@ cur = conn.cursor()
 
 cur.execute("CREATE TABLE IF NOT EXISTS tasks (id SERIAL PRIMARY KEY, task TEXT)")
 
+cur.execute('SELECT * FROM tasks')
+tasks = cur.fetchall()
+
+
 class ToDo():
     def __init__(self):
         self.window = ctk.CTk()
@@ -32,8 +36,8 @@ class ToDo():
 
         self.image = tk.PhotoImage(file="background.png")
         self.canvas = tk.Canvas(highlightthickness=0)
-        self.canvas.config(width=400, height=845)
-        self.canvas.create_image(200, 422, image=self.image)
+        self.canvas.config(width=400, height=845, bg="#373737")
+      
         self.canvas.create_text(200, 20, font=("Arial", 15), text=time, fill="gray")
         self.canvas.grid(column=1, row=1)
 
@@ -44,33 +48,60 @@ class ToDo():
         self.add_btn.configure(width=300)
         self.add_btn.place(x=50, y=800)
 
-        # transparent
+        self.del_btns = []
+        self.load_db()
 
-        # self.canvas2 = tk.Canvas(highlightthickness=0, bg="transparent")
-        # self.canvas2.place(x=100,y=10)
+    def load_db(self):
+        if tasks: 
+            for task in tasks:
+                self.canvas.create_text(self.x, self.y, font=("Arial", 20, "bold"), text=task[1], fill="white", tags=str(task[0]))
+                self.canvas.create_line(0, self.y + 20, 400, self.y + 20, fill="white", width=1, tags=str(task[0]))
 
-        # self.label = ctk.CTkLabel(self.window, text="CTkLabel", fg_color="transparent")
-        # self.label.place(x=100,y=10)
+                self.del_btn = ctk.CTkButton(self.window, text="❌", command=lambda id=task[0]: self.del_task(id))
+                self.del_btn.configure(width=10)
+                self.del_btn.place(x=360, y=self.y - 15)
+                self.del_btns.append(self.del_btn)
+                self.y += 40
+        else: 
+            self.id = 1 
 
-        # self.my_frame = ctk.CTkFrame(self.window, fg_color="", text="dklsjhaljdh")
-        # self.my_frame.place(x=100,y=10)
-        # self.label.configure(background="transparent")
-
-   
 
     def get_task(self):
         self.task = self.entry.get().lower()
-        if self.task:
+        if len(self.task) <= 20 and self.task:
+            self.task = f"{self.task[0].upper()}{self.task[1:]}"
             cur.execute("INSERT INTO tasks (task) VALUES (%s)", (self.task,))
             conn.commit()
-            self.entry.delete(0, "end")
-            self.canvas.create_text(self.x, self.y, font=("Arial", 20, "bold"), text=f"{self.task[0].upper()}{self.task[1:]}", fill="white")
-            self.checkbox = ctk.CTkCheckBox(self.window, text="", width=1)
-            self.checkbox.place(x=self.x + len(self.task) * 10, y=self.y - 10)
-            self.y += 30
+            
+
+            self.canvas.create_text(self.x, self.y, font=("Arial", 20, "bold"), text=self.task, fill="white", tags=self.id)
+            self.canvas.create_line(0, self.y + 20, 400, self.y + 20, fill="white", width=1, tags=self.id)
+
+            self.del_btn = ctk.CTkButton(self.window, text="❌", command=lambda id=self.id: self.del_task(id))
+            self.del_btn.configure(width=10)
+            self.del_btn.place(x=360, y=self.y - 15)
+
+            self.del_btns.append(self.del_btn)
+
+            self.id += 1 
+            self.y += 40
+            
+        self.entry.delete(0, "end")
 
 
-
+    def del_task(self, id):
+        cur.execute("DELETE FROM tasks WHERE id = %s", (id,))
+        conn.commit()
+    
+        
+        # text_obj = self.canvas.find_withtag(str(id + 1))
+        # line_obg = self.canvas.find_withtag(str(id + 2))
+        # self.canvas.delete(text_obj)
+        # self.canvas.delete(line_obg)
+        
+        # self.canvas.delete("all")
+        # self.canvas.create_text(200, 20, font=("Arial", 15), text=time, fill="gray")
+        # self.load_db()
 
 
 
@@ -78,3 +109,8 @@ class ToDo():
 if __name__ == "__main__":
     app = ToDo()
     app.window.mainloop()
+
+'''
+sry but gui bugs in ctk, bb
+graveyard app
+'''
